@@ -1,10 +1,22 @@
 package com.example.todoapp.utils
 
 import android.app.Dialog
+import android.content.Context
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Toast
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+
+enum class Status{
+    SUCCESS,
+    ERROR,
+    LOADING
+}
+
+fun Context.longToasShow(msg: String){
+    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+}
 
 fun Dialog.setupDialog(layoutResId : Int){
     setContentView(layoutResId)
@@ -25,4 +37,9 @@ fun validateEdittext(editText: EditText, textInputLayout: TextInputLayout): Bool
             true
         }
     }
+}
+
+fun clearEdittext(editText: EditText, textInputLayout: TextInputLayout) {
+    editText.text = null
+    textInputLayout.error = null
 }

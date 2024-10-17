@@ -12,11 +12,24 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.ViewModelProvider
+import com.example.todoapp.adapters.TaskRecyclerViewAdapter
 import com.example.todoapp.databinding.ActivityMainBinding
+import com.example.todoapp.models.Task
+import com.example.todoapp.utils.Status
+import com.example.todoapp.utils.clearEdittext
+import com.example.todoapp.utils.longToasShow
 import com.example.todoapp.utils.setupDialog
 import com.example.todoapp.utils.validateEdittext
+import com.example.todoapp.viewmodels.TaskViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import java.util.Date
+import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,6 +55,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val taskViewModel : TaskViewModel by lazy {
+        ViewModelProvider(this)[TaskViewModel::class.java]
+    }
+
+    private val taskRecyclerViewAdapter :  TaskRecyclerViewAdapter by lazy {
+        TaskRecyclerViewAdapter()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -51,6 +72,8 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        mainBinding.taskrv.adapter = taskRecyclerViewAdapter
 
         // add task start
         val addCloseBtn = addTaskDialog.findViewById<ImageView>(R.id.ImgClose)
@@ -79,13 +102,37 @@ class MainActivity : AppCompatActivity() {
             }
         } }
 
-        mainBinding.addTaskFABtn.setOnClickListener { addTaskDialog.show() }
+        mainBinding.addTaskFABtn.setOnClickListener {
+            clearEdittext(addEditTitle, addEditTitleL)
+            clearEdittext(addEditDesc, addEditDescL)
+            addTaskDialog.show() }
         val saveTaskBtn = addTaskDialog.findViewById<Button>(R.id.btnSaveText)
         saveTaskBtn.setOnClickListener {
             if (validateEdittext(addEditTitle, addEditTitleL) && validateEdittext(addEditDesc, addEditDescL)){
                 addTaskDialog.dismiss()
-                Toast.makeText(this, "validated!!", Toast.LENGTH_SHORT).show()
-                loadingDialog.show()
+                val newTask = Task(
+                    UUID.randomUUID().toString(),
+                    addEditTitle.text.toString().trim(),
+                    addEditDesc.text.toString().trim(),
+                    Date()
+                )
+                taskViewModel.insertTask(newTask).observe(this){
+                    when(it.status){
+                        Status.LOADING -> {
+                            loadingDialog.show()
+                        }
+                        Status.SUCCESS -> {
+                            loadingDialog.dismiss()
+                            if (it.date?.toInt() != -1){
+                                longToasShow("Task Added Successfully!")
+                            }
+                        }
+                        Status.ERROR -> {
+                            loadingDialog.dismiss()
+                            it.message?.let { it1 -> longToasShow(it1) }
+                        }
+                    }
+                }
             }
         }
         // add task end
@@ -126,5 +173,30 @@ class MainActivity : AppCompatActivity() {
         }
 
         // update task end
+        callGetTaskList()
+    }
+
+    private fun callGetTaskList(){
+        loadingDialog.show()
+        CoroutineScope(Dispatchers.Main).launch {
+            taskViewModel.getTaskList().collect{
+                when(it.status){
+                    Status.LOADING -> {
+                        loadingDialog.show()
+                    }
+                    Status.SUCCESS -> {
+                        it.date?.collect{taskList ->
+                            loadingDialog.dismiss()
+                            taskRecyclerViewAdapter.addAllTask(taskList)
+                        }
+                    }
+                    Status.ERROR -> {
+                        loadingDialog.dismiss()
+                        it.message?.let { it1 -> longToasShow(it1) }
+                    }
+                }
+        }
+
+        }
     }
 }
