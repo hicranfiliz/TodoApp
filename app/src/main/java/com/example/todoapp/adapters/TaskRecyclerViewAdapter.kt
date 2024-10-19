@@ -3,6 +3,7 @@ package com.example.todoapp.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todoapp.R
@@ -10,7 +11,10 @@ import com.example.todoapp.models.Task
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class TaskRecyclerViewAdapter: RecyclerView.Adapter<TaskRecyclerViewAdapter.ViewHolder>() {
+class TaskRecyclerViewAdapter(
+    private val deleteCallback : (position : Int, task: Task) -> Unit
+):
+    RecyclerView.Adapter<TaskRecyclerViewAdapter.ViewHolder>() {
 
     private val taskList = arrayListOf<Task>()
 
@@ -18,6 +22,8 @@ class TaskRecyclerViewAdapter: RecyclerView.Adapter<TaskRecyclerViewAdapter.View
         val titleTxt : TextView = itemView.findViewById(R.id.txtTitle)
         val descTxt : TextView = itemView.findViewById(R.id.txtDesc)
         val dateTxt : TextView = itemView.findViewById(R.id.txtDate)
+
+        val deleteImg : ImageView = itemView.findViewById(R.id.ImgDelete)
 
     }
 
@@ -45,6 +51,12 @@ class TaskRecyclerViewAdapter: RecyclerView.Adapter<TaskRecyclerViewAdapter.View
 
         val dateFormat = SimpleDateFormat("dd-MMM-yyyy HH:mm:ss a", Locale.getDefault())
         holder.dateTxt.text = dateFormat.format(task.date)
+
+        holder.deleteImg.setOnClickListener {
+            if (holder.adapterPosition != -1){
+                deleteCallback(position, task)
+            }
+        }
     }
 
 
