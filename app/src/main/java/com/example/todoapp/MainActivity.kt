@@ -59,29 +59,6 @@ class MainActivity : AppCompatActivity() {
         ViewModelProvider(this)[TaskViewModel::class.java]
     }
 
-    private val taskRecyclerViewAdapter :  TaskRecyclerViewAdapter by lazy {
-        TaskRecyclerViewAdapter(){ position, task ->
-            taskViewModel
-                .deleteTask(task)
-                .observe(this){
-                    when(it.status){
-                        Status.LOADING -> {
-                            loadingDialog.show()
-                        }
-                        Status.SUCCESS -> {
-                            loadingDialog.dismiss()
-                            if (it.date != -1){
-                                longToasShow("Task Deleted Successfully!")
-                            }
-                        }
-                        Status.ERROR -> {
-                            loadingDialog.dismiss()
-                            it.message?.let { it1 -> longToasShow(it1) }
-                        }
-                    }
-                }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,8 +69,6 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-        mainBinding.taskrv.adapter = taskRecyclerViewAdapter
 
         // add task start
         val addCloseBtn = addTaskDialog.findViewById<ImageView>(R.id.ImgClose)
@@ -169,8 +144,8 @@ class MainActivity : AppCompatActivity() {
             }
         } }
 
-        val updateEditDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDescription)
-        val updateEditDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescriptionL)
+        val updateEditDesc = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDescription)
+        val updateEditDescL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescriptionL)
 
         updateEditDesc.addTextChangedListener { object : TextWatcher{
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -184,19 +159,81 @@ class MainActivity : AppCompatActivity() {
         updateCloseBtn.setOnClickListener { updateTaskDialog.dismiss() }
 
         val updateTaskBtn = updateTaskDialog.findViewById<Button>(R.id.btnUpdateTask)
-        updateTaskBtn.setOnClickListener {
-            if (validateEdittext(updateEditTitle, updateEditTitleL) && validateEdittext(updateEditTitle, updateEditTitleL)){
-                addTaskDialog.dismiss()
-                Toast.makeText(this, "validated!!", Toast.LENGTH_SHORT).show()
-                loadingDialog.show()
-            }
-        }
+
 
         // update task end
-        callGetTaskList()
+
+        val taskRecyclerViewAdapter = TaskRecyclerViewAdapter(){type, position, task ->
+            if (type == "delete"){
+            taskViewModel
+                //.deleteTask(task)
+                .deleteTaskUsingId(task.id)
+                .observe(this){
+                    when(it.status){
+                        Status.LOADING -> {
+                            loadingDialog.show()
+                        }
+                        Status.SUCCESS -> {
+                            loadingDialog.dismiss()
+                            if (it.date != -1){
+                                longToasShow("Task Deleted Successfully!")
+                            }
+                        }
+                        Status.ERROR -> {
+                            loadingDialog.dismiss()
+                            it.message?.let { it1 -> longToasShow(it1) }
+                        }
+                    }
+                }
+            }else if(type == "update"){
+                updateEditTitle.setText(task.title)
+                updateEditDesc.setText(task.description)
+                updateTaskBtn.setOnClickListener {
+                    if (validateEdittext(updateEditTitle, updateEditTitleL) && validateEdittext(updateEditTitle, updateEditTitleL)){
+                        val updateTask = Task(
+                            task.id,
+                            updateEditTitle.text.toString().trim(),
+                            updateEditDesc.text.toString().trim(),
+                            Date()
+                        )
+                        updateTaskDialog.dismiss()
+                        loadingDialog.show()
+
+                        taskViewModel
+                            //.updateTask(updateTask)
+                            // updateTask paticular field date alanini guncellemez. sadece belirledigimiz alanlari gunceller.
+                            .updateTaskPaticularField(
+                                task.id,
+                                updateEditTitle.text.toString().trim(),
+                                updateEditDesc.text.toString().trim(),
+                            )
+                            .observe(this){
+                                when(it.status){
+                                    Status.LOADING -> {
+                                        loadingDialog.show()
+                                    }
+                                    Status.SUCCESS -> {
+                                        loadingDialog.dismiss()
+                                        if (it.date != -1){
+                                            longToasShow("Task Updated Successfully!")
+                                        }
+                                    }
+                                    Status.ERROR -> {
+                                        loadingDialog.dismiss()
+                                        it.message?.let { it1 -> longToasShow(it1) }
+                                    }
+                                }
+                            }
+                    }
+                }
+                updateTaskDialog.show()
+            }
+        }
+        mainBinding.taskrv.adapter = taskRecyclerViewAdapter
+        callGetTaskList(taskRecyclerViewAdapter)
     }
 
-    private fun callGetTaskList(){
+    private fun callGetTaskList(taskRecyclerViewAdapter : TaskRecyclerViewAdapter){
         loadingDialog.show()
         CoroutineScope(Dispatchers.Main).launch {
             taskViewModel.getTaskList().collect{

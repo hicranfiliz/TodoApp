@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class TaskRecyclerViewAdapter(
-    private val deleteCallback : (position : Int, task: Task) -> Unit
+    private val deleteUpdateCallback : (type: String, position : Int, task: Task) -> Unit
 ):
     RecyclerView.Adapter<TaskRecyclerViewAdapter.ViewHolder>() {
 
@@ -24,6 +24,7 @@ class TaskRecyclerViewAdapter(
         val dateTxt : TextView = itemView.findViewById(R.id.txtDate)
 
         val deleteImg : ImageView = itemView.findViewById(R.id.ImgDelete)
+        val editImg : ImageView = itemView.findViewById(R.id.ImgEdit)
 
     }
 
@@ -54,7 +55,13 @@ class TaskRecyclerViewAdapter(
 
         holder.deleteImg.setOnClickListener {
             if (holder.adapterPosition != -1){
-                deleteCallback(position, task)
+                deleteUpdateCallback("delete", position, task)
+            }
+        }
+
+        holder.editImg.setOnClickListener {
+            if (holder.adapterPosition != -1){
+                deleteUpdateCallback("update", position, task)
             }
         }
     }
