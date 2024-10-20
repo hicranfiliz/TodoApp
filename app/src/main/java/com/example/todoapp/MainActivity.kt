@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
+import com.example.todoapp.adapters.TaskRViewBindingAdapter
 import com.example.todoapp.adapters.TaskRecyclerViewAdapter
 import com.example.todoapp.databinding.ActivityMainBinding
 import com.example.todoapp.models.Task
@@ -163,7 +164,7 @@ class MainActivity : AppCompatActivity() {
 
         // update task end
 
-        val taskRecyclerViewAdapter = TaskRecyclerViewAdapter(){type, position, task ->
+        val taskRecyclerViewAdapter = TaskRViewBindingAdapter{type, position, task ->
             if (type == "delete"){
             taskViewModel
                 //.deleteTask(task)
@@ -233,7 +234,7 @@ class MainActivity : AppCompatActivity() {
         callGetTaskList(taskRecyclerViewAdapter)
     }
 
-    private fun callGetTaskList(taskRecyclerViewAdapter : TaskRecyclerViewAdapter){
+    private fun callGetTaskList(taskRecyclerViewAdapter : TaskRViewBindingAdapter){
         loadingDialog.show()
         CoroutineScope(Dispatchers.Main).launch {
             taskViewModel.getTaskList().collect{
