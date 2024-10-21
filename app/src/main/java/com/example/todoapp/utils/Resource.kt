@@ -1,8 +1,8 @@
 package com.example.todoapp.utils
 
-sealed class Resource<T>(val status: Status, val date: T? = null, val message: String? = null) {
+sealed class Resource<T>(val status: Status, val data: T? = null, val message: String? = null) {
 
-    class Success<T>(date: T?): Resource<T>(Status.SUCCESS, date)
-    class Error<T>(message: String?, date: T? = null): Resource<T>(Status.ERROR, date, message)
+    class Success<T>(message: String? ,data: T?= null): Resource<T>(Status.SUCCESS, data, message)
+    class Error<T>(message: String?, data: T? = null): Resource<T>(Status.ERROR, data, message)
     class Loading<T> : Resource<T>(Status.LOADING)
 }

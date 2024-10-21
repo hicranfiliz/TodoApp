@@ -9,26 +9,30 @@ import com.example.todoapp.utils.Resource
 
 class TaskViewModel(application: Application) : AndroidViewModel(application){
     private val taskRepository = TaskRepository(application)
+    val taskStateFlow get() = taskRepository.taskStateFlow
+    val statusLiveData get() = taskRepository.statusLiveData
 
-    fun getTaskList() = taskRepository.getTaskList()
+    fun getTaskList(){
+        taskRepository.getTaskList()
+    }
 
-    fun insertTask(task: Task): MutableLiveData<Resource<Long>>{
+    fun insertTask(task: Task){
         return taskRepository.insertTask(task)
     }
 
-    fun deleteTask(task: Task): MutableLiveData<Resource<Int>>{
-        return taskRepository.deleteTask(task)
+    fun deleteTask(task: Task){
+        taskRepository.deleteTask(task)
     }
 
-    fun deleteTaskUsingId(taskId: String): MutableLiveData<Resource<Int>>{
-        return taskRepository.deleteTaskUsingId(taskId)
+    fun deleteTaskUsingId(taskId: String){
+        taskRepository.deleteTaskUsingId(taskId)
     }
 
-    fun updateTask(task: Task): MutableLiveData<Resource<Int>>{
-        return taskRepository.updateTask(task)
+    fun updateTask(task: Task){
+        taskRepository.updateTask(task)
     }
 
-    fun updateTaskPaticularField(taskId: String, title: String, description: String): MutableLiveData<Resource<Int>>{
-        return taskRepository.updateTaskPaticularField(taskId, title,description)
+    fun updateTaskPaticularField(taskId: String, title: String, description: String) {
+        taskRepository.updateTaskPaticularField(taskId, title,description)
     }
 }

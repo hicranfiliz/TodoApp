@@ -4,21 +4,24 @@ import android.app.Dialog
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
-import com.example.todoapp.adapters.TaskRViewBindingAdapter
-import com.example.todoapp.adapters.TaskRecyclerViewAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.example.todoapp.adapters.TaskRVVBlistAdapter
 import com.example.todoapp.databinding.ActivityMainBinding
 import com.example.todoapp.models.Task
 import com.example.todoapp.utils.Status
+import com.example.todoapp.utils.StatusResult
+import com.example.todoapp.utils.StatusResult.*
 import com.example.todoapp.utils.clearEdittext
+import com.example.todoapp.utils.hideKeyBoard
 import com.example.todoapp.utils.longToasShow
 import com.example.todoapp.utils.setupDialog
 import com.example.todoapp.utils.validateEdittext
@@ -27,7 +30,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
@@ -105,30 +108,16 @@ class MainActivity : AppCompatActivity() {
         val saveTaskBtn = addTaskDialog.findViewById<Button>(R.id.btnSaveText)
         saveTaskBtn.setOnClickListener {
             if (validateEdittext(addEditTitle, addEditTitleL) && validateEdittext(addEditDesc, addEditDescL)){
-                addTaskDialog.dismiss()
+
                 val newTask = Task(
                     UUID.randomUUID().toString(),
                     addEditTitle.text.toString().trim(),
                     addEditDesc.text.toString().trim(),
                     Date()
                 )
-                taskViewModel.insertTask(newTask).observe(this){
-                    when(it.status){
-                        Status.LOADING -> {
-                            loadingDialog.show()
-                        }
-                        Status.SUCCESS -> {
-                            loadingDialog.dismiss()
-                            if (it.date?.toInt() != -1){
-                                longToasShow("Task Added Successfully!")
-                            }
-                        }
-                        Status.ERROR -> {
-                            loadingDialog.dismiss()
-                            it.message?.let { it1 -> longToasShow(it1) }
-                        }
-                    }
-                }
+                hideKeyBoard(it)
+                addTaskDialog.dismiss()
+                taskViewModel.insertTask(newTask)
             }
         }
         // add task end
@@ -164,28 +153,12 @@ class MainActivity : AppCompatActivity() {
 
         // update task end
 
-        val taskRecyclerViewAdapter = TaskRViewBindingAdapter{type, position, task ->
+        val taskRVVBlistAdapter = TaskRVVBlistAdapter{type, position, task ->
             if (type == "delete"){
             taskViewModel
                 //.deleteTask(task)
                 .deleteTaskUsingId(task.id)
-                .observe(this){
-                    when(it.status){
-                        Status.LOADING -> {
-                            loadingDialog.show()
-                        }
-                        Status.SUCCESS -> {
-                            loadingDialog.dismiss()
-                            if (it.date != -1){
-                                longToasShow("Task Deleted Successfully!")
-                            }
-                        }
-                        Status.ERROR -> {
-                            loadingDialog.dismiss()
-                            it.message?.let { it1 -> longToasShow(it1) }
-                        }
-                    }
-                }
+
             }else if(type == "update"){
                 updateEditTitle.setText(task.title)
                 updateEditDesc.setText(task.description)
@@ -197,55 +170,79 @@ class MainActivity : AppCompatActivity() {
                             updateEditDesc.text.toString().trim(),
                             Date()
                         )
+                        hideKeyBoard(it)
                         updateTaskDialog.dismiss()
-                        loadingDialog.show()
-
                         taskViewModel
-                            //.updateTask(updateTask)
+                            .updateTask(updateTask)
                             // updateTask paticular field date alanini guncellemez. sadece belirledigimiz alanlari gunceller.
-                            .updateTaskPaticularField(
-                                task.id,
-                                updateEditTitle.text.toString().trim(),
-                                updateEditDesc.text.toString().trim(),
-                            )
-                            .observe(this){
-                                when(it.status){
-                                    Status.LOADING -> {
-                                        loadingDialog.show()
-                                    }
-                                    Status.SUCCESS -> {
-                                        loadingDialog.dismiss()
-                                        if (it.date != -1){
-                                            longToasShow("Task Updated Successfully!")
-                                        }
-                                    }
-                                    Status.ERROR -> {
-                                        loadingDialog.dismiss()
-                                        it.message?.let { it1 -> longToasShow(it1) }
-                                    }
-                                }
-                            }
+//                            .updateTaskPaticularField(
+//                                task.id,
+//                                updateEditTitle.text.toString().trim(),
+//                                updateEditDesc.text.toString().trim(),
+//                            )
+
                     }
                 }
                 updateTaskDialog.show()
             }
         }
-        mainBinding.taskrv.adapter = taskRecyclerViewAdapter
-        callGetTaskList(taskRecyclerViewAdapter)
+
+        // eger recycler adapter kullanirsam tum data refreshlenir.
+        // listadapter kullanirsam belli datalar guncellenir.
+        mainBinding.taskrv.adapter = taskRVVBlistAdapter
+        taskRVVBlistAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver(){
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                super.onItemRangeInserted(positionStart, itemCount)
+                mainBinding.taskrv.smoothScrollToPosition(positionStart)
+            }
+        })
+        callGetTaskList(taskRVVBlistAdapter)
+        taskViewModel.getTaskList()
+        statusCallback()
     }
 
-    private fun callGetTaskList(taskRecyclerViewAdapter : TaskRViewBindingAdapter){
-        loadingDialog.show()
-        CoroutineScope(Dispatchers.Main).launch {
-            taskViewModel.getTaskList().collect{
+    private fun statusCallback(){
+        taskViewModel
+            .statusLiveData
+            .observe(this){
                 when(it.status){
                     Status.LOADING -> {
                         loadingDialog.show()
                     }
                     Status.SUCCESS -> {
-                        it.date?.collect{taskList ->
-                            loadingDialog.dismiss()
-                            taskRecyclerViewAdapter.addAllTask(taskList)
+                        loadingDialog.dismiss()
+                        when(it.data as StatusResult){
+                            Added ->{
+                                Log.d("StatusResult", "Added")
+                            }
+                            Deleted ->{
+                                Log.d("StatusResult", "Deleted")
+                            }
+                            Updated ->{
+                                Log.d("StatusResult", "Updated")
+                            }
+                        }
+                        it.message?.let { it1 -> longToasShow(it1) }
+                    }
+                    Status.ERROR -> {
+                        loadingDialog.dismiss()
+                        it.message?.let { it1 -> longToasShow(it1) }
+                    }
+                }
+            }
+    }
+
+    private fun callGetTaskList(taskRecyclerViewAdapter : TaskRVVBlistAdapter){
+        CoroutineScope(Dispatchers.Main).launch {
+            taskViewModel.taskStateFlow.collectLatest{
+                when(it.status){
+                    Status.LOADING -> {
+                        loadingDialog.show()
+                    }
+                    Status.SUCCESS -> {
+                        loadingDialog.dismiss()
+                        it.data?.collect{taskList ->
+                            taskRecyclerViewAdapter.submitList(taskList)
                         }
                     }
                     Status.ERROR -> {
