@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
@@ -199,6 +200,35 @@ class MainActivity : AppCompatActivity() {
         callGetTaskList(taskRVVBlistAdapter)
         taskViewModel.getTaskList()
         statusCallback()
+
+        callSearch()
+    }
+
+    private fun callSearch() {
+        mainBinding.edSearch.addTextChangedListener(object : TextWatcher{
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            }
+
+            override fun afterTextChanged(query: Editable?) {
+                if (query.toString().isNotEmpty()){
+                    taskViewModel.searchTaskList(query.toString())
+                }else{
+                    taskViewModel.getTaskList()
+                }
+            }
+        })
+
+        mainBinding.edSearch.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                hideKeyBoard(v)
+                return@setOnEditorActionListener true
+            }
+            false
+        }
     }
 
     private fun statusCallback(){
@@ -219,6 +249,7 @@ class MainActivity : AppCompatActivity() {
                                 Log.d("StatusResult", "Deleted")
                             }
                             Updated ->{
+                                Log.d("StatusResult", "Updated")
                                 Log.d("StatusResult", "Updated")
                             }
                         }

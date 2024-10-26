@@ -44,7 +44,6 @@ class TaskRepository(application: Application) {
                 _taskStateFlow.emit(Error(e.message.toString()))
             }
         }
-
     }
 
     fun insertTask(task: Task){
@@ -116,5 +115,18 @@ class TaskRepository(application: Application) {
         }else{
             _statusLiveData.postValue(Error("Something Went Wrong", statusResult))
         }
+    }
+
+    fun searchTaskList(query: String){
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                _taskStateFlow.emit(Loading())
+                val result = taskDao.searchTaskList("%${query}%")
+                _taskStateFlow.emit(Success("loading" ,result))
+            }catch (e: Exception){
+                _taskStateFlow.emit(Error(e.message.toString()))
+            }
+        }
+
     }
 }
