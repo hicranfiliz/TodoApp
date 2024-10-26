@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.ImageView
@@ -27,6 +28,7 @@ import com.example.todoapp.utils.longToasShow
 import com.example.todoapp.utils.setupDialog
 import com.example.todoapp.utils.validateEdittext
 import com.example.todoapp.viewmodels.TaskViewModel
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.CoroutineScope
@@ -159,6 +161,7 @@ class MainActivity : AppCompatActivity() {
             taskViewModel
                 //.deleteTask(task)
                 .deleteTaskUsingId(task.id)
+                restoreDeletedTask(task)
 
             }else if(type == "update"){
                 updateEditTitle.setText(task.title)
@@ -202,6 +205,17 @@ class MainActivity : AppCompatActivity() {
         statusCallback()
 
         callSearch()
+    }
+
+    private fun restoreDeletedTask(deletedTask: Task){
+        val snackBar = Snackbar.make(
+            mainBinding.root, "Deleted '${deletedTask.title}'",
+            Snackbar.LENGTH_LONG
+        )
+        snackBar.setAction("Undo"){
+            taskViewModel.insertTask(deletedTask)
+        }
+        snackBar.show()
     }
 
     private fun callSearch() {
