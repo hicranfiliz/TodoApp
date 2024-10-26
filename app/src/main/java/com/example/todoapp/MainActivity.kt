@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.ImageView
@@ -21,13 +20,16 @@ import com.example.todoapp.databinding.ActivityMainBinding
 import com.example.todoapp.models.Task
 import com.example.todoapp.utils.Status
 import com.example.todoapp.utils.StatusResult
-import com.example.todoapp.utils.StatusResult.*
+import com.example.todoapp.utils.StatusResult.Added
+import com.example.todoapp.utils.StatusResult.Deleted
+import com.example.todoapp.utils.StatusResult.Updated
 import com.example.todoapp.utils.clearEdittext
 import com.example.todoapp.utils.hideKeyBoard
 import com.example.todoapp.utils.longToasShow
 import com.example.todoapp.utils.setupDialog
 import com.example.todoapp.utils.validateEdittext
 import com.example.todoapp.viewmodels.TaskViewModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -40,29 +42,29 @@ import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
 
-    private val mainBinding: ActivityMainBinding by lazy{
+    private val mainBinding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
 
-    private val addTaskDialog : Dialog by lazy {
+    private val addTaskDialog: Dialog by lazy {
         Dialog(this, R.style.DialogCustomTheme).apply {
             setupDialog(R.layout.add_task_dialog)
         }
     }
 
-    private val updateTaskDialog : Dialog by lazy {
+    private val updateTaskDialog: Dialog by lazy {
         Dialog(this, R.style.DialogCustomTheme).apply {
             setupDialog(R.layout.update_task_layout)
         }
     }
 
-    private val loadingDialog : Dialog by lazy {
+    private val loadingDialog: Dialog by lazy {
         Dialog(this, R.style.DialogCustomTheme).apply {
             setupDialog(R.layout.loading_dialog)
         }
     }
 
-    private val taskViewModel : TaskViewModel by lazy {
+    private val taskViewModel: TaskViewModel by lazy {
         ViewModelProvider(this)[TaskViewModel::class.java]
     }
 
@@ -85,32 +87,55 @@ class MainActivity : AppCompatActivity() {
         val addEditTitle = addTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
         val addEditTitleL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
 
-        addEditTitle.addTextChangedListener { object : TextWatcher{
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                validateEdittext(addEditTitle, addEditTitleL)
+        addEditTitle.addTextChangedListener {
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    validateEdittext(addEditTitle, addEditTitleL)
+                }
             }
-        } }
+        }
 
         val addEditDesc = addTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDescription)
         val addEditDescL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescriptionL)
 
-        addEditDesc.addTextChangedListener { object : TextWatcher{
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                validateEdittext(addEditDesc, addEditDescL)
+        addEditDesc.addTextChangedListener {
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    validateEdittext(addEditDesc, addEditDescL)
+                }
             }
-        } }
+        }
 
         mainBinding.addTaskFABtn.setOnClickListener {
             clearEdittext(addEditTitle, addEditTitleL)
             clearEdittext(addEditDesc, addEditDescL)
-            addTaskDialog.show() }
+            addTaskDialog.show()
+        }
         val saveTaskBtn = addTaskDialog.findViewById<Button>(R.id.btnSaveText)
         saveTaskBtn.setOnClickListener {
-            if (validateEdittext(addEditTitle, addEditTitleL) && validateEdittext(addEditDesc, addEditDescL)){
+            if (validateEdittext(addEditTitle, addEditTitleL) && validateEdittext(
+                    addEditDesc,
+                    addEditDescL
+                )
+            ) {
 
                 val newTask = Task(
                     UUID.randomUUID().toString(),
@@ -129,24 +154,44 @@ class MainActivity : AppCompatActivity() {
         val updateEditTitle = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskTitle)
         val updateEditTitleL = addTaskDialog.findViewById<TextInputLayout>(R.id.edTaskTitleL)
 
-        updateEditTitle.addTextChangedListener { object : TextWatcher{
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                validateEdittext(updateEditTitle, updateEditTitleL)
-            }
-        } }
+        updateEditTitle.addTextChangedListener {
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
 
-        val updateEditDesc = updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDescription)
-        val updateEditDescL = updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescriptionL)
-
-        updateEditDesc.addTextChangedListener { object : TextWatcher{
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                validateEdittext(updateEditTitle, updateEditTitleL)
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    validateEdittext(updateEditTitle, updateEditTitleL)
+                }
             }
-        } }
+        }
+
+        val updateEditDesc =
+            updateTaskDialog.findViewById<TextInputEditText>(R.id.edTaskDescription)
+        val updateEditDescL =
+            updateTaskDialog.findViewById<TextInputLayout>(R.id.edTaskDescriptionL)
+
+        updateEditDesc.addTextChangedListener {
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    validateEdittext(updateEditTitle, updateEditTitleL)
+                }
+            }
+        }
 
         val updateCloseBtn = updateTaskDialog.findViewById<ImageView>(R.id.ImgClose)
         updateCloseBtn.setOnClickListener { updateTaskDialog.dismiss() }
@@ -156,18 +201,22 @@ class MainActivity : AppCompatActivity() {
 
         // update task end
 
-        val taskRVVBlistAdapter = TaskRVVBlistAdapter{type, position, task ->
-            if (type == "delete"){
-            taskViewModel
-                //.deleteTask(task)
-                .deleteTaskUsingId(task.id)
+        val taskRVVBlistAdapter = TaskRVVBlistAdapter { type, position, task ->
+            if (type == "delete") {
+                taskViewModel
+                    //.deleteTask(task)
+                    .deleteTaskUsingId(task.id)
                 restoreDeletedTask(task)
 
-            }else if(type == "update"){
+            } else if (type == "update") {
                 updateEditTitle.setText(task.title)
                 updateEditDesc.setText(task.description)
                 updateTaskBtn.setOnClickListener {
-                    if (validateEdittext(updateEditTitle, updateEditTitleL) && validateEdittext(updateEditTitle, updateEditTitleL)){
+                    if (validateEdittext(updateEditTitle, updateEditTitleL) && validateEdittext(
+                            updateEditTitle,
+                            updateEditTitleL
+                        )
+                    ) {
                         val updateTask = Task(
                             task.id,
                             updateEditTitle.text.toString().trim(),
@@ -178,7 +227,7 @@ class MainActivity : AppCompatActivity() {
                         updateTaskDialog.dismiss()
                         taskViewModel
                             .updateTask(updateTask)
-                            // updateTask paticular field date alanini guncellemez. sadece belirledigimiz alanlari gunceller.
+                        // updateTask paticular field date alanini guncellemez. sadece belirledigimiz alanlari gunceller.
 //                            .updateTaskPaticularField(
 //                                task.id,
 //                                updateEditTitle.text.toString().trim(),
@@ -194,32 +243,40 @@ class MainActivity : AppCompatActivity() {
         // eger recycler adapter kullanirsam tum data refreshlenir.
         // listadapter kullanirsam belli datalar guncellenir.
         mainBinding.taskrv.adapter = taskRVVBlistAdapter
-        taskRVVBlistAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver(){
+        ViewCompat.setNestedScrollingEnabled(mainBinding.taskrv, false)
+        taskRVVBlistAdapter.registerAdapterDataObserver(object :
+            RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 super.onItemRangeInserted(positionStart, itemCount)
-                mainBinding.taskrv.smoothScrollToPosition(positionStart)
+                //mainBinding.taskrv.smoothScrollToPosition(positionStart)
+                mainBinding.nestedScrollView.smoothScrollTo(0, positionStart)
+            }
+
+            override fun onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int) {
+                super.onItemRangeMoved(fromPosition, toPosition, itemCount)
+                mainBinding.taskrv.smoothScrollToPosition(0)
             }
         })
         callGetTaskList(taskRVVBlistAdapter)
-        taskViewModel.getTaskList()
+        callSortByLiveData()
         statusCallback()
 
         callSearch()
     }
 
-    private fun restoreDeletedTask(deletedTask: Task){
+    private fun restoreDeletedTask(deletedTask: Task) {
         val snackBar = Snackbar.make(
             mainBinding.root, "Deleted '${deletedTask.title}'",
             Snackbar.LENGTH_LONG
         )
-        snackBar.setAction("Undo"){
+        snackBar.setAction("Undo") {
             taskViewModel.insertTask(deletedTask)
         }
         snackBar.show()
     }
 
     private fun callSearch() {
-        mainBinding.edSearch.addTextChangedListener(object : TextWatcher{
+        mainBinding.edSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
 
             }
@@ -228,10 +285,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun afterTextChanged(query: Editable?) {
-                if (query.toString().isNotEmpty()){
+                if (query.toString().isNotEmpty()) {
                     taskViewModel.searchTaskList(query.toString())
-                }else{
-                    taskViewModel.getTaskList()
+                } else {
+                    callSortByLiveData()
                 }
             }
         })
@@ -243,32 +300,78 @@ class MainActivity : AppCompatActivity() {
             }
             false
         }
+
+        callSortByDialog()
     }
 
-    private fun statusCallback(){
+    private fun callSortByLiveData() {
+        taskViewModel.sortByLiveData.observe(this) {
+            taskViewModel.getTaskList(it.second, it.first)
+        }
+    }
+
+    private fun callSortByDialog() {
+        var checkedItem = 0
+        var items =
+            arrayOf("Title Ascending", "Title Descending", "Date Ascending", "Date Desscending")
+        mainBinding.imgSort.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("")
+                .setPositiveButton("OK") { _, _ ->
+                    when (checkedItem) {
+                        0 -> {
+                            taskViewModel.setSortBy(Pair("title", true))
+                        }
+
+                        1 -> {
+                            taskViewModel.setSortBy(Pair("title", false))
+                        }
+
+                        2 -> {
+                            taskViewModel.setSortBy(Pair("date", true))
+                        }
+
+                        else -> {
+                            taskViewModel.setSortBy(Pair("date", false))
+                        }
+                    }
+                }
+                .setSingleChoiceItems(items, checkedItem) { _, selectedItemIndex ->
+                    checkedItem = selectedItemIndex
+                }
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    private fun statusCallback() {
         taskViewModel
             .statusLiveData
-            .observe(this){
-                when(it.status){
+            .observe(this) {
+                when (it.status) {
                     Status.LOADING -> {
                         loadingDialog.show()
                     }
+
                     Status.SUCCESS -> {
                         loadingDialog.dismiss()
-                        when(it.data as StatusResult){
-                            Added ->{
+                        when (it.data as StatusResult) {
+                            Added -> {
                                 Log.d("StatusResult", "Added")
                             }
-                            Deleted ->{
+
+                            Deleted -> {
                                 Log.d("StatusResult", "Deleted")
                             }
-                            Updated ->{
+
+                            Updated -> {
                                 Log.d("StatusResult", "Updated")
                                 Log.d("StatusResult", "Updated")
                             }
                         }
                         it.message?.let { it1 -> longToasShow(it1) }
                     }
+
                     Status.ERROR -> {
                         loadingDialog.dismiss()
                         it.message?.let { it1 -> longToasShow(it1) }
@@ -277,25 +380,27 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun callGetTaskList(taskRecyclerViewAdapter : TaskRVVBlistAdapter){
+    private fun callGetTaskList(taskRecyclerViewAdapter: TaskRVVBlistAdapter) {
         CoroutineScope(Dispatchers.Main).launch {
-            taskViewModel.taskStateFlow.collectLatest{
-                when(it.status){
+            taskViewModel.taskStateFlow.collectLatest {
+                when (it.status) {
                     Status.LOADING -> {
                         loadingDialog.show()
                     }
+
                     Status.SUCCESS -> {
                         loadingDialog.dismiss()
-                        it.data?.collect{taskList ->
+                        it.data?.collect { taskList ->
                             taskRecyclerViewAdapter.submitList(taskList)
                         }
                     }
+
                     Status.ERROR -> {
                         loadingDialog.dismiss()
                         it.message?.let { it1 -> longToasShow(it1) }
                     }
                 }
-        }
+            }
 
         }
     }
